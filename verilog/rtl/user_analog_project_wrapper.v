@@ -70,6 +70,8 @@ module user_analog_project_wrapper (
      * available.  out and oeb must be 1.8V signals.
      */
 
+//ANALOG_PADS = 11 (caravel/verilog/rtl/defines.v)
+
     input  [`MPRJ_IO_PADS-`ANALOG_PADS-1:0] io_in,
     input  [`MPRJ_IO_PADS-`ANALOG_PADS-1:0] io_in_3v3,
     output [`MPRJ_IO_PADS-`ANALOG_PADS-1:0] io_out,
@@ -119,21 +121,22 @@ module user_analog_project_wrapper (
     output [2:0] user_irq
 );
 
-/*--------------------------------------*/
-/* User project is instantiated  here   */
-/*--------------------------------------*/
 
-user_analog_proj_example mprj (
-    `ifdef USE_POWER_PINS
-        .vdda1(vdda1),  // User area 1 3.3V power
-        .vdda2(vdda2),  // User area 2 3.3V power
-        .vssa1(vssa1),  // User area 1 analog ground
-        .vssa2(vssa2),  // User area 2 analog ground
-        .vccd1(vccd1),  // User area 1 1.8V power
-        .vccd2(vccd2),  // User area 2 1.8V power
-        .vssd1(vssd1),  // User area 1 digital ground
-        .vssd2(vssd2),  // User area 2 digital ground
-    `endif
+wire serial_data_rlbp_out;
+wire pxl_start_in_path;
+wire pxl_start_out_path;
+wire pxl_done;
+
+//#######################################################
+//#     User macros/projects ares instantiated  here    #
+//#######################################################
+
+pixel_macro pixel_macro0 (
+
+`ifdef USE_POWER_PINS
+	.vccd1(vccd1),	// User area 1 1.8V power
+	.vssd1(vssd1),	// User area 1 digital ground
+`endif
 
     .wb_clk_i(wb_clk_i),
     .wb_rst_i(wb_rst_i),
@@ -156,27 +159,60 @@ user_analog_proj_example mprj (
     .la_oenb (la_oenb),
 
     // IO Pads
+
     .io_in (io_in),
-    .io_in_3v3 (io_in_3v3),
     .io_out(io_out),
     .io_oeb(io_oeb),
 
-    // GPIO-analog
-    .gpio_analog(gpio_analog),
-    .gpio_noesd(gpio_noesd),
+    // IRQ
+    .irq(user_irq),
 
-    // Dedicated analog
-    .io_analog(io_analog),
-    .io_clamp_high(io_clamp_high),
-    .io_clamp_low(io_clamp_low),
+    .pxl_start_in_path(pxl_start_in_path),
+    .pxl_start_out_path(pxl_start_out_path),
+    .pxl_done(pxl_done)
+);
 
-    // Clock
-    .user_clock2(user_clock2),
+  
+
+rlbp_macro rlbp_macro0 (
+
+`ifdef USE_POWER_PINS
+	.vccd1(vccd1),	// User area 1 1.8V power
+	.vssd1(vssd1),	// User area 1 digital ground
+`endif
+
+    .wb_clk_i(wb_clk_i),
+    .wb_rst_i(wb_rst_i),
+
+    // MGMT SoC Wishbone Slave
+
+    .wbs_cyc_i(wbs_cyc_i),
+    .wbs_stb_i(wbs_stb_i),
+    .wbs_we_i(wbs_we_i),
+    .wbs_sel_i(wbs_sel_i),
+    .wbs_adr_i(wbs_adr_i),
+    .wbs_dat_i(wbs_dat_i),
+    .wbs_ack_o(wbs_ack_o),
+    .wbs_dat_o(wbs_dat_o),
+
+    // Logic Analyzer
+
+    .la_data_in(la_data_in),
+    .la_data_out(la_data_out),
+    .la_oenb (la_oenb),
+
+    // IO Pads
+
+    .io_in (io_in),
+    .io_out(io_out),
+    .io_oeb(io_oeb),
 
     // IRQ
-    .irq(user_irq)
+    .irq(user_irq),
+    .serial_data_rlbp_out(serial_data_rlbp_out)
 );
 
 endmodule	// user_analog_project_wrapper
 
 `default_nettype wire
+
